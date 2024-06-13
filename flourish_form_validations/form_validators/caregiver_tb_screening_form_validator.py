@@ -1,6 +1,7 @@
-from edc_constants.constants import YES
+from edc_constants.constants import NO, OTHER, YES
 from edc_form_validators import FormValidator
 
+from flourish_caregiver.constants import NONE
 from flourish_child_validations.form_validators import ChildFormValidatorMixin
 
 
@@ -20,27 +21,63 @@ class CaregiverTBScreeningFormValidator(ChildFormValidatorMixin, FormValidator):
                          field='evaluated_for_tb',
                          field_required='clinic_visit_date')
 
-        self.validate_other_specify(
-            field='tb_tests',
-            other_specify_field='other_test',
+        self.m2m_required_if(
+            YES,
+            m2m_field='tb_tests',
+            field='evaluated_for_tb',
         )
 
-        self.required_if('chest_xray',
-                         field='tb_tests',
-                         field_required='chest_xray_results')
+        self.m2m_other_specify(
+            OTHER,
+            m2m_field='tb_tests',
+            field_other='other_test',
+        )
 
-        self.required_if('sputum_sample',
-                         field='tb_tests',
-                         field_required='sputum_sample_results')
+        self.m2m_other_specify(
+            NONE,
+            m2m_field='tb_tests',
+            field_other='diagnosed_with_TB',
+        )
 
-        self.required_if('urine_test',
-                         field='tb_tests',
-                         field_required='urine_test_results')
+        self.validate_other_specify(
+            field='diagnosed_with_TB',
+        )
 
-        self.required_if('skin_test',
-                         field='tb_tests',
-                         field_required='skin_test_results')
+        self.required_if(
+            YES,
+            field_required='started_on_TB_treatment',
+            field='diagnosed_with_TB',
+        )
 
-        self.required_if('blood_test',
-                         field='tb_tests',
-                         field_required='blood_test_results')
+        self.validate_other_specify(
+            field='started_on_TB_treatment',
+        )
+
+        self.required_if(
+            NO,
+            field_required='started_on_TB_preventative_therapy',
+            field='diagnosed_with_TB',
+        )
+
+        self.validate_other_specify(
+            field='started_on_TB_preventative_therapy'
+        )
+
+        self.required_if(YES,
+                         field='diagnosed_with_TB',
+                         field_required='started_on_TB_treatment')
+
+        field_responses = {
+            'chest_xray': 'chest_xray_results',
+            'sputum_sample': 'sputum_sample_results',
+            'urine_test': 'urine_test_results',
+            'skin_test': 'skin_test_results',
+            'blood_test': 'blood_test_results',
+        }
+
+        for response, field in field_responses.items():
+            self.m2m_other_specify(
+                response,
+                m2m_field='tb_tests',
+                field_other=field,
+            )
